@@ -10,7 +10,7 @@ class ItemSet:
     
     def InItems(self, items):
         """
-        Kiểm tra xem tất cả các phần tử trong itemset có nằm trong danh sách items đã cho không.
+        Kiểm tra xem tất cả các phần tử trong itemset có nằm trong danh sách items không.
         """
         for item in self.items:
             if item not in items:
@@ -31,12 +31,9 @@ class ItemSet:
 
 class PHUIUP:
     """
-    Lớp chính chạy thuật toán
+    Lớp chính để chạy thuật toán
     """
     def __init__(self):
-        self.start_timestamp = 0
-        self.end_timestamp = 0
-        self.memory_usage = 0
         self.TU = 0
         self.database_size = 0
         self.min_util = float()
@@ -82,18 +79,12 @@ class PHUIUP:
                 }
                 transactions.append(transaction)
 
-        # Tạo các 1-ItemSet từ item_info
+        # Tạo các 1-ItemSet từ dict_item
         one_item_sets = [ItemSet(items=[item], twu=info['TWU'], pro=info['Pro']) for item, info in dict_item.items()]
         
         # Cập nhật kích cỡ databse  
         self.database_size = len(transactions)
 
-        # for transaction in transactions:
-        #     print(transaction)
-        # for itemSet in one_item_sets:
-        #     print(itemSet)
-        # print(self.database_size)
-        # print(self.TU)
         return transactions, one_item_sets
         
     def Check_HTWPUI(self, list_ItemSet):
@@ -115,7 +106,6 @@ class PHUIUP:
                 if i != j:
                     # Lấy union của hai ItemSet
                     union_items =  set(i.items).union(set(j.items))
-
                     # Chỉ lấy các union có k item
                     if len(union_items) == k:
                         candidates.add(ItemSet(union_items))
@@ -190,9 +180,6 @@ class PHUIUP:
                 self.list_PHUI.append(itemset)
 
     def run_algorithm(self, file_path, minUtil, minPro):
-        self.start_timestamp = 0
-        self.end_timestamp = 0
-        self.memory_usage = 0
         self.TU = 0
         self.database_size = 0
         self.min_util = minUtil
@@ -218,18 +205,64 @@ class PHUIUP:
 
         self.Calculate_Utility(database)
 
-        for itemSet in self.list_PHUI:
-            print(itemSet)
+        # for itemSet in self.list_PHUI:
+        #     print(itemSet)
 
-           
-#test
-file_input = ".\data\input.txt"
-minUtil = 0.25
-minPro = 0.15
-algorithm_PHUIUP = PHUIUP()
-algorithm_PHUIUP.run_algorithm(file_input,minUtil, minPro)     
+class ITPHUI_PHUIUP:
+    """
+    Lớp chạy thuật toán để tìm kiếm tương tác top k.
+    """
+    def __init__(self):
+        self.start_timestamp = 0
+        self.end_timestamp = 0
+        self.memory_usage = 0
+        self.list_TPHUI = []
+        self.minUtil = minUtil
+        self.list_k = list_k
 
+    def run_algorithm(self, file_path, minUtil, list_k):
+        self.start_timestamp = 0
+        self.end_timestamp = 0
+        self.memory_usage = 0
+        self.list_TPHUI = []
+        self.minUtil = minUtil
+        self.list_k = list_k
 
+        # Chạy thuật toán PHUIUP để tìm tất cả PHUI có Pro >=0
+        algorithm_PHUIUP = PHUIUP()
+        algorithm_PHUIUP.run_algorithm(file_path, minUtil, 0)
+        list_phui =  algorithm_PHUIUP.list_PHUI
         
+        # Sắp xếp danh sách PHUI tìm được theo chiều giảm dần của Pro
+        list_phui.sort(key=lambda x: x.Pro, reverse=True)
 
+        # Tiến hành tìm kiếm tương tác top-k
+        for k in list_k:
+            if k > 0 and k <= len(list_phui):
+                top_k_phui = list_phui[:k]
+                self.list_TPHUI.append(top_k_phui)
+            elif k > 0 and k > len(list_phui):
+                top_k_phui = list_phui
+                self.list_TPHUI.append(top_k_phui)
+            else:
+                self.list_TPHUI.append([])
+            
+    def print_result(self):
+        k = 0
+        for i in self.list_TPHUI:
+            print(f"k = {self.list_k[k]}")
+            k += 1
+            for j in i:
+                print(j)
+            print()
+            print("----------------------------------")
 
+if __name__ == '__main__':
+    # Test
+    file_input = "./input/input.txt"    # file path
+    minUtil = 0.25                      # min Utility (0.25 = 25%) 
+    list_k = [1, 3, 5, 7, 10, 20]       # danh sách k
+
+    algorithm = ITPHUI_PHUIUP()
+    algorithm.run_algorithm(file_input, minUtil, list_k)
+    algorithm.print_result()
