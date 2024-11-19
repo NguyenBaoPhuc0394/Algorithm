@@ -36,6 +36,7 @@ class PHUIUP:
         self.min_util = float()
         self.min_pro = float()
         self.list_HTWPUI = []
+        self.list_PHUI = []
 
     def ReadDatabase(self, file_path):
         """
@@ -95,37 +96,37 @@ class PHUIUP:
         return result
 
     def Apriori_gen(self, prev_itemsets, k):
-        """
-        Sinh các ứng viên itemset cấp độ k với cắt tỉa.
-        """
-        candidates = set()
+            """
+            Sinh các ứng viên itemset cấp độ k với cắt tỉa.
+            """
+            candidates = set()
 
-        for i in prev_itemsets:
-            for j in prev_itemsets:
-                if i != j:
-                    # Lấy union của hai ItemSet
-                    union_items = set(i.items).union(set(j.items))
-                    # Chỉ lấy các union có k item
-                    if len(union_items) == k:
-                        new_itemset = ItemSet(union_items)
+            for i in prev_itemsets:
+                for j in prev_itemsets:
+                    if i != j:
+                        # Lấy union của hai ItemSet
+                        union_items = set(i.items).union(set(j.items))
+                        # Chỉ lấy các union có k item
+                        if len(union_items) == k:
+                            new_itemset = ItemSet(union_items)
 
-                        # Kiểm tra tất cả tập con (k-1) của new_itemset có trong prev_itemsets
-                        flag = True
-                        list_subset = self.generate_subsets(new_itemset.items, k - 1)
-                        for subset in list_subset:
-                            found = False
-                            for itemset in prev_itemsets:
-                                if subset == itemset.items:
-                                    found = True
+                            # Kiểm tra tất cả tập con (k-1) của new_itemset có trong prev_itemsets
+                            flag = True
+                            list_subset = self.generate_subsets(new_itemset.items, k - 1)
+                            for subset in list_subset:
+                                found = False
+                                for itemset in prev_itemsets:
+                                    if subset == itemset.items:
+                                        found = True
+                                        break
+                                if found == False:
+                                    flag = False
                                     break
-                            if found == False:
-                                flag = False
-                                break
-                        
-                        if flag == True:
-                            candidates.add(new_itemset)
-        
-        return candidates
+                            
+                            if flag == True:
+                                candidates.add(new_itemset)
+            
+            return candidates
 
 
     def generate_subsets(self, itemset, size):
@@ -145,9 +146,6 @@ class PHUIUP:
                 list_subset.append(subset)
         
         return list_subset
-
-
-
 
     def Calculate_TWU_Pro(self, itemsets, database):
         """
@@ -194,23 +192,23 @@ class PHUIUP:
     #         if itemset.utility >= self.TU*self.min_util:
     #             self.list_PHUI.append(itemset)
 
-    # def Calculate_Utility(self, database):
-    #     """
-    #     Tính tiện ích thực tế của các itemset trong HTWPUIs bằng cách quét database một lần.
-    #     """
-    #     for transaction in database:
-    #         items = transaction['items']
-    #         item_utilities = transaction['item_utilities']
+    def Calculate_Utility(self, database):
+        """
+        Tính tiện ích thực tế của các itemset trong HTWPUIs bằng cách quét database một lần.
+        """
+        for transaction in database:
+            items = transaction['items']
+            item_utilities = transaction['item_utilities']
 
-    #         for itemset in self.list_HTWPUI:
-    #             if itemset.InItems(items):
-    #                 # Tính tiện ích của itemset trong giao dịch hiện tại
-    #                 utility = 0
-    #                 for item in itemset.items:
-    #                     if item in items:
-    #                         index = items.index(item)
-    #                         utility += item_utilities[index]
-    #                 itemset.utility += utility
+            for itemset in self.list_HTWPUI:
+                if itemset.InItems(items):
+                    # Tính tiện ích của itemset trong giao dịch hiện tại
+                    utility = 0
+                    for item in itemset.items:
+                        if item in items:
+                            index = items.index(item)
+                            utility += item_utilities[index]
+                    itemset.utility += utility
 
         # Kiểm tra HTWPUI có phải HUI
         for itemset in self.list_HTWPUI:
@@ -241,13 +239,12 @@ class PHUIUP:
                 self.list_HTWPUI.append(itemSet)
             k = k + 1
 
-        # self.Calculate_Utility(database)
+        self.Calculate_Utility(database)
 
         # for itemSet in self.list_PHUI:
         #     print(itemSet)
 
-
-class ITPHUI_PHUIUP:
+class ITPHUI_PHUIUP_plus:
     """
     Lớp chính chạy thuật toán để tìm kiếm tương tác top k PHUI.
     """
@@ -270,8 +267,21 @@ class ITPHUI_PHUIUP:
         # Chạy thuật toán PHUIUP để tìm tất cả PHUI có Pro >=0
         algorithm_PHUIUP = PHUIUP()
         algorithm_PHUIUP.run_algorithm(file_path, minUtil, 0)
-        list_HTWPUI =  algorithm_PHUIUP.list_HTWPUI
+        list_phui =  algorithm_PHUIUP.list_PHUI
+        
+        # Sắp xếp danh sách PHUI tìm được theo chiều giảm dần của Pro
+        list_phui.sort(key=lambda x: x.Pro, reverse=True)
 
+        # Tiến hành tìm kiếm tương tác top-k
+        for k in list_k:
+            if k > 0 and k <= len(list_phui):
+                top_k_phui = list_phui[:k]
+                self.list_TPHUI.append(top_k_phui)
+            elif k > 0 and k > len(list_phui):
+                top_k_phui = list_phui
+                self.list_TPHUI.append(top_k_phui)
+            else:
+                self.list_TPHUI.append([])
             
     def print_result(self):
         k = 0
@@ -286,9 +296,9 @@ class ITPHUI_PHUIUP:
 if __name__ == '__main__':
     # Test
     file_path = "./input/input_int.txt"     # file path
-    minUtil = 0.25                      # min Utility (0.25 = 25%) 
-    list_k = [1, 3, 5, 7, 10, 20]       # danh sách k
+    minUtil = 0.25                          # min Utility (0.25 = 25%) 
+    list_k = [1, 3, 5, 7, 10, 20]           # danh sách k
 
-    algorithm = ITPHUI_PHUIUP()
+    algorithm = ITPHUI_PHUIUP_plus()
     algorithm.run_algorithm(file_path, minUtil, list_k)
     algorithm.print_result()
