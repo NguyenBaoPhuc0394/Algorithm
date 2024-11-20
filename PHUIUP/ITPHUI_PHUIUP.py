@@ -263,7 +263,7 @@ class ITPHUI_PHUIUP:
 
 if __name__ == '__main__':
     # Test
-    file_path = "./input/retail_utility_probability.txt"     # file path
+    file_path = "./input/input_abc.txt"     # file path
     minUtil = 0.01                      # min Utility (0.25 = 25%) 
     list_k = [1, 3, 5, 7, 10, 20]       # danh sách k
 

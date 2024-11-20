@@ -214,6 +214,11 @@ class PHUIUP:
         for itemset in self.list_HTWPUI:
             if itemset.utility >= self.TU * self.min_util:
                 self.list_PHUI.append(itemset)
+        print("list HTWPUI")
+        for itemset in self.list_HTWPUI:
+            print(itemset)
+        print("\n\n")
+            
 
     def run_algorithm(self, file_path, minUtil, minPro):
         self.TU = 0
@@ -261,6 +266,7 @@ class ITPHUI_PHUIUP_plus:
         self.end_timestamp = 0
         self.memory_usage = 0
         self.list_TPHUI = []
+        self.TU = 0
         self.minUtil = minUtil
         self.list_k = list_k
 
@@ -268,6 +274,7 @@ class ITPHUI_PHUIUP_plus:
         algorithm_PHUIUP = PHUIUP()
         algorithm_PHUIUP.run_algorithm(file_path, minUtil, 0)
         list_phui =  algorithm_PHUIUP.list_PHUI
+        self.TU = algorithm_PHUIUP.TU
         
         # Sắp xếp danh sách PHUI tìm được theo chiều giảm dần của Pro
         list_phui.sort(key=lambda x: x.Pro, reverse=True)
@@ -284,6 +291,7 @@ class ITPHUI_PHUIUP_plus:
                 self.list_TPHUI.append([])
             
     def print_result(self):
+        print(f"minutil = {self.minUtil}% of {self.TU} ({self.minUtil*self.TU})")
         k = 0
         for i in self.list_TPHUI:
             print(f"k = {self.list_k[k]}")
@@ -295,9 +303,10 @@ class ITPHUI_PHUIUP_plus:
 
 if __name__ == '__main__':
     # Test
-    file_path = "./input/input_int.txt"     # file path
-    minUtil = 0.25                          # min Utility (0.25 = 25%) 
-    list_k = [1, 3, 5, 7, 10, 20]           # danh sách k
+    # file_path = "./input/input_abc.txt"
+    file_path = "./input/retail_utility_probability.txt"
+    minUtil = 0.01
+    list_k = [1, 3, 5, 7, 10, 20]
 
     algorithm = ITPHUI_PHUIUP_plus()
     algorithm.run_algorithm(file_path, minUtil, list_k)
